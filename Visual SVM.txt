@@ -1,0 +1,25 @@
+Nel vostro progetto collocate tali files in un nuovo package "visualsvm" e in Test.java fate le seguenti modifiche.
+
+
+
+Sostituite
+
+import svm.*;
+
+con
+
+import visualsvm.*;
+
+Ed aggiungete
+
+import java.nio.file.*;
+
+ 
+
+Inoltre sostituite
+
+ExecuteVM vm = new ExecuteVM(parserASM.code);
+
+con              
+
+ExecuteVM vm = new ExecuteVM(parserASM.code,parserASM.sourceMap,Files.readAllLines(Paths.get(fileName+".asm")));

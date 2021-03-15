@@ -1,0 +1,8 @@
+SOLO AMB GLOBALE, LAYOUT SUO AR: (STACK CRESCE VERSO IL BASSO!)
+
+[BASE DELLO STACK E' QUI SOTTO]  <- $fp (settato a valore iniziale di $sp)
+valore prima var dichiarata      [offset -1]
+valore seconda var               [offset -2]
+.
+.
+valore ultima (n-esima) var      [offset -n] 

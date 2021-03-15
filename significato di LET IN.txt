@@ -1,0 +1,24 @@
+Dichiarazioni come nel linguaggio funzionale ML (Meta Language)
+
+-------------
+
+{
+int X = 5;
+int y = 6;
+
+codice senza dichiarazioni
+}
+
+------------------
+
+
+let
+
+int X = 5;
+int y = 6;
+
+in
+
+codice senza dichiarazioni
+
+;
