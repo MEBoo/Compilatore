@@ -37,17 +37,30 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	public String visitNode(FunNode n) {
 		if (print) printNode(n,n.id);
 		String declCode = null, popDecl = null, popParl = null;
-		for (Node dec : n.declist) {
+		
+		for (DecNode dec : n.declist) {						//MOD (HO): nel ripulire lo stack ogni dec / par di tipo Arrow occupa 2 posizioni
 			declCode = nlJoin(declCode,visit(dec));
-			popDecl = nlJoin(popDecl,"pop");
+			
+			if (dec.getType() instanceof ArrowTypeNode)
+				popDecl = nlJoin(popDecl,"pop","pop");
+			else
+				popDecl = nlJoin(popDecl,"pop");
 		}
-		for (int i=0;i<n.parlist.size();i++) popParl = nlJoin(popParl,"pop");
+		
+		for (int i=0;i<n.parlist.size();i++)
+		{
+			if (n.parlist.get(i).getType() instanceof ArrowTypeNode)
+				popParl = nlJoin(popParl,"pop","pop");
+			else
+				popParl = nlJoin(popParl,"pop");
+		}
+		
 		String funl = freshFunLabel();
 		putCode(
 			nlJoin(
 				funl+":",
 				"cfp", // set $fp to $sp value
-				"lra", // load $ra value
+				"lra", // load $ra value 
 				declCode, // generate code for local declarations (they use the new $fp!!!)
 				visit(n.exp), // generate code for function body expression
 				"stm", // set $tm to popped value (function result)
@@ -61,7 +74,53 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				"js"  // jump to to popped address
 			)
 		);
-		return "push "+funl;		
+		return nlJoin(			//MOD (HO)
+				"lfp",			//carico sullo stack il puntatore all'AR della dichiarazione della funzione - che corrisponde all'attuale Frame Pointer (registro FP)
+				"push "+funl
+				);		
+	}
+	
+	@Override
+	public String visitNode(CallNode n) {	//MOD (HO) - la chiamata deve usare come access link il puntatore dell'AR impacchettato nell'ID in chiamata
+		if (print) printNode(n,n.id);
+		String argCode = null, getAR = null;
+		for (int i=n.arglist.size()-1;i>=0;i--) argCode=nlJoin(argCode,visit(n.arglist.get(i)));
+		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
+		return nlJoin(
+			"lfp", 		  // load Control Link (pointer to frame of function "id" caller)
+			argCode, 	  // generate code for argument expressions in reversed order
+			"lfp", getAR, // retrieve address of frame containing "id" declaration
+                          // by following the static chain (of Access Links)
+            "stm", 		  // set $tm to popped value (lo devo usare 2 volte)
+            "ltm", "push "+n.entry.offset, "add", "lw", 	//carico Access Link - andandolo a prendere nello stack in posizione precedente all'indirizzo 
+            "ltm", "push "+(n.entry.offset-1), "add", "lw", //carico indirizzo funzione
+            "js"  		  // jump to popped address (saving address of subsequent instruction in $ra)
+		);
+	}
+
+	@Override
+	public String visitNode(IdNode n) {
+		if (print) printNode(n,n.id);
+		String getAR = null;
+		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
+		
+		if(n.entry.type instanceof ArrowTypeNode) { 			//MOD (HO) - preparo la closure 
+			return nlJoin( 
+				"lfp", getAR, // retrieve address of frame containing "id" declaration
+				"stm", 		  // set $tm to popped value (salvo l'indirizzo della AR - devo usarlo 2 volte)
+		        "ltm", 		  // ricarico sullo stack l'indirizzo dell' AR dove è dichiarato ID
+				"push "+n.entry.offset, "add", "lw", //carico l'AR dove è effettivamente dichiarata la funzione (mi servirà come Access Link nella chiamata)
+				"ltm", 		  // ricarico sullo stack l'indirizzo dell' AR dove è dichiarato ID
+				"push "+(n.entry.offset-1), "add", "lw" // carica l'indirizzo della funzione (la label)
+				);
+		} else {
+			return nlJoin(
+				"lfp", getAR, // retrieve address of frame containing "id" declaration
+				              // by following the static chain (of Access Links)
+				"push "+n.entry.offset, "add", // compute address of "id" declaration
+				"lw" // load value of "id" variable
+			);
+		}
 	}
 
 	@Override
@@ -133,38 +192,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		);
 	}
 
-	@Override
-	public String visitNode(CallNode n) {
-		if (print) printNode(n,n.id);
-		String argCode = null, getAR = null;
-		for (int i=n.arglist.size()-1;i>=0;i--) argCode=nlJoin(argCode,visit(n.arglist.get(i)));
-		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
-		return nlJoin(
-			"lfp", // load Control Link (pointer to frame of function "id" caller)
-			argCode, // generate code for argument expressions in reversed order
-			"lfp", getAR, // retrieve address of frame containing "id" declaration
-                          // by following the static chain (of Access Links)
-            "stm", // set $tm to popped value (with the aim of duplicating top of stack)
-            "ltm", // load Access Link (pointer to frame of function "id" declaration)
-            "ltm", // duplicate top of stack
-            "push "+n.entry.offset, "add", // compute address of "id" declaration
-			"lw", // load address of "id" function
-            "js"  // jump to popped address (saving address of subsequent instruction in $ra)
-		);
-	}
-
-	@Override
-	public String visitNode(IdNode n) {
-		if (print) printNode(n,n.id);
-		String getAR = null;
-		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
-		return nlJoin(
-			"lfp", getAR, // retrieve address of frame containing "id" declaration
-			              // by following the static chain (of Access Links)
-			"push "+n.entry.offset, "add", // compute address of "id" declaration
-			"lw" // load value of "id" variable
-		);
-	}
+	
 
 	@Override
 	public String visitNode(BoolNode n) {

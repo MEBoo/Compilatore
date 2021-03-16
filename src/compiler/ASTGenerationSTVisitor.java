@@ -125,6 +125,9 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitFundec(FundecContext c) {
 		if (print) printVarAndProdName(c);
 		List<ParNode> parList = new ArrayList<>();
+		
+		//TODO: SPOSTARE L'ASSEGNAZIONE DEL ARROWTYPE QUI
+		
 		for (int i = 1; i < c.ID().size(); i++) { 
 			ParNode p = new ParNode(c.ID(i).getText(),(TypeNode) visit(c.hotype(i-1))); //MOD: hotype
 			p.setLine(c.ID(i).getSymbol().getLine());
@@ -213,6 +216,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	}
 	
 	//MOD: NEW VISITS
+	
 	@Override
 	public Node visitNot(NotContext c) {
 		if (print) printVarAndProdName(c);
@@ -236,6 +240,21 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 			n.setLine(c.OR().getSymbol().getLine());
 		}
 		
+		return n;
+	}
+	
+	// HIGHER ORDER
+	
+	@Override
+	public Node visitArrow(ArrowContext c) { // hotype di tipo arrow esempio: (hotype,hotype)=>type 
+		if (print) printVarAndProdName(c);
+		
+		List<TypeNode> parList = new ArrayList<>();	 // carico i parametri che sono hotype (quindi ricorsivamente potrebbero anche essere di tipo arrow)
+		for (int i = 0; i < c.hotype().size(); i++)
+			parList.add((TypeNode) visit(c.hotype(i)));
+		
+		Node n = new ArrowTypeNode(parList, (TypeNode)visit(c.type()));  // il ritorno è sempre type
+		n.setLine(c.ARROW().getSymbol().getLine());
 		return n;
 	}
 }

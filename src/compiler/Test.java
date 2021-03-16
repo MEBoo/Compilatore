@@ -5,12 +5,15 @@ import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.tree.*;
 import compiler.lib.*;
 import compiler.exc.*;
-import svm.*;
+//import svm.*;
+import visualsvm.*;
+import java.nio.file.*;
+
 
 public class Test {
     public static void main(String[] args) throws Exception {
    			
-    	String fileName = "base.fool";
+    	String fileName = "linsum.fool";
 
     	CharStream chars = CharStreams.fromFileName(fileName);
     	FOOLLexer lexer = new FOOLLexer(chars);
@@ -43,8 +46,8 @@ public class Test {
     		System.out.print("Type of main program expression is: ");
     		new PrintEASTVisitor().visit(mainType);
     
-    	} catch (IncomplException e) {    		
-    		System.out.println("Could not determine main program expression type due to errors detected before type checking.");
+    	//} catch (IncomplException e) {    		
+    	//	System.out.println("Could not determine main program expression type due to errors detected before type checking.");
     	
     	} catch (TypeException e) {
     		System.out.println("Type checking error in main program expression: "+e.text); 
@@ -76,7 +79,9 @@ public class Test {
     	if (lexerASM.lexicalErrors+parserASM.getNumberOfSyntaxErrors()>0) System.exit(1);
 
     	System.out.println("Running generated code via Stack Virtual Machine.");
-    	ExecuteVM vm = new ExecuteVM(parserASM.code);
+    	//ExecuteVM vm = new ExecuteVM(parserASM.code);
+    	ExecuteVM vm = new ExecuteVM(parserASM.code,parserASM.sourceMap,Files.readAllLines(Paths.get(fileName+".asm")));
+
     	vm.cpu();
 
     }

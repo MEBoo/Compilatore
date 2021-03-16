@@ -31,7 +31,8 @@ public class BaseASTVisitor<S,E extends Exception> {
 	
 	public S visit(Visitable v, String mark) throws E {   //when printing marks this visit with string mark
 		if (v==null)                                      
-			if (incomplExc) throw new IncomplException(); 
+			if (incomplExc) 
+				throw new IncomplException(); 
 			else                                         
 				return null; 
 		if (print) {

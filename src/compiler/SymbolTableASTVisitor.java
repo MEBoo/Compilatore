@@ -44,15 +44,24 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	@Override
 	public Void visitNode(FunNode n) {
 		if (print) printNode(n);
+		
 		Map<String, STentry> hm = symTable.get(nestingLevel);
 		List<TypeNode> parTypes = new ArrayList<>();  
+		
 		for (ParNode par : n.parlist) parTypes.add(par.getType()); 
-		STentry entry = new STentry(nestingLevel, new ArrowTypeNode(parTypes,n.retType),decOffset--);
+		
+		n.setType(new ArrowTypeNode(parTypes,n.retType));   	//MOD: setto il tipo che non è settato come per gli altri DecNode nel costruttore nella fase ASTGeneration 
+																//     perchè? non è meglio uniformare le cose? Nel costruttore FunNode abbiamo tutto per settare anche il type
+																
+		STentry entry = new STentry(nestingLevel,n.getType() ,decOffset);	//MOD (HO): l'offset va decrementato di 2 anziché di 1
+		decOffset-=2;
+		
 		//inserimento di ID nella symtable
 		if (hm.put(n.id, entry) != null) {
 			System.out.println("Fun id " + n.id + " at line "+ n.getLine() +" already declared");
 			stErrors++;
 		} 
+		
 		//creare una nuova hashmap per la symTable
 		nestingLevel++;
 		Map<String, STentry> hmn = new HashMap<>();
@@ -61,11 +70,17 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		decOffset=-2;
 		
 		int parOffset=1;
-		for (ParNode par : n.parlist)
+		for (ParNode par : n.parlist) {
+			
+			if(par.getType() instanceof ArrowTypeNode) //MOD (HO): l'offset va incrementato di 2 anzichè 1 - lo pre-incremento per usare lo slot aggiuntivo necessario
+				parOffset++;
+			
 			if (hmn.put(par.id, new STentry(nestingLevel,par.getType(),parOffset++)) != null) {
 				System.out.println("Par id " + par.id + " at line "+ n.getLine() +" already declared");
 				stErrors++;
 			}
+		}
+		
 		for (Node dec : n.declist) visit(dec);
 		visit(n.exp);
 		//rimuovere la hashmap corrente poiche' esco dallo scope               
@@ -80,6 +95,10 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		visit(n.exp);
 		Map<String, STentry> hm = symTable.get(nestingLevel);
 		STentry entry = new STentry(nestingLevel,n.getType(),decOffset--);
+		
+		if(n.getType() instanceof ArrowTypeNode) 	//MOD: (HO) l'offset va decrementato di 2
+			decOffset--;
+		
 		//inserimento di ID nella symtable
 		if (hm.put(n.id, entry) != null) {
 			System.out.println("Var id " + n.id + " at line "+ n.getLine() +" already declared");

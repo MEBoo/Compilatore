@@ -53,7 +53,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 			} catch (TypeException e) {
 				System.out.println("Type checking error in a declaration: " + e.text);
 			}
-		if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) ) 
+		
+		if (n.retType==null)
+			throw new TypeException("Undeclared type for ret type for function " + n.id,n.getLine()); //MOD: se il type è un ID che non esiste blocco tutto
+		else if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) ) 
 			throw new TypeException("Wrong return type for function " + n.id,n.getLine());
 		return null;
 	}
@@ -61,7 +64,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	@Override
 	public TypeNode visitNode(VarNode n) throws TypeException {
 		if (print) printNode(n,n.id);
-		if ( !isSubtype(visit(n.exp),ckvisit(n.getType())) )
+		
+		if (n.getType()==null)
+			throw new TypeException("Undeclared type for variable " + n.id,n.getLine()); //MOD: se il type è un ID che non esiste blocco tutto
+		else if ( !isSubtype(visit(n.exp),ckvisit(n.getType())) )
 			throw new TypeException("Incompatible value for variable " + n.id,n.getLine());
 		return null;
 	}
@@ -89,6 +95,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		if (print) printNode(n);
 		TypeNode l = visit(n.left);
 		TypeNode r = visit(n.right);
+		
+		if (l instanceof ArrowTypeNode || r instanceof ArrowTypeNode)				//MOD (HO)
+			throw new TypeException("ArrowTypes are not comparable",n.getLine());
+		
 		if ( !(isSubtype(l, r) || isSubtype(r, l)) )
 			throw new TypeException("Incompatible types in equal",n.getLine());
 		return new BoolTypeNode();
@@ -131,8 +141,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(IdNode n) throws TypeException {
 		if (print) printNode(n,n.id);
 		TypeNode t = visit(n.entry); 
-		if (t instanceof ArrowTypeNode)
-			throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine());
+		
+		//if (t instanceof ArrowTypeNode)														//MOD (HO)
+		//	throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine());
+
 		return t;
 	}
 
@@ -209,6 +221,9 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		TypeNode l = visit(n.left);
 		TypeNode r = visit(n.right);
 		
+		if (l instanceof ArrowTypeNode || r instanceof ArrowTypeNode)				// check introdotto con supporto a HO
+			throw new TypeException("ArrowTypes are not comparable",n.getLine());
+		
 		if ( !(isSubtype(l, r) || isSubtype(r, l)) )
 			throw new TypeException("Incompatible types in greater than equal",n.getLine());
 		
@@ -221,6 +236,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		
 		TypeNode l = visit(n.left);
 		TypeNode r = visit(n.right);
+		
+		if (l instanceof ArrowTypeNode || r instanceof ArrowTypeNode)				// check introdotto con supporto a HO
+			throw new TypeException("ArrowTypes are not comparable",n.getLine());
+		
 		if ( !(isSubtype(l, r) || isSubtype(r, l)) )
 			throw new TypeException("Incompatible types in less than equal",n.getLine());
 		
