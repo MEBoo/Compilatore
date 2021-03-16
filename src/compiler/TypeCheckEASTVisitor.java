@@ -28,7 +28,8 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		for (Node dec : n.declist)
 			try {
 				visit(dec);
-			} catch (IncomplException e) { 
+			} catch (IncomplException e) {
+				
 			} catch (TypeException e) {
 				System.out.println("Type checking error in a declaration: " + e.text);
 			}
@@ -47,7 +48,8 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		for (Node dec : n.declist)
 			try {
 				visit(dec);
-			} catch (IncomplException e) { 
+			} catch (IncomplException e) {
+				
 			} catch (TypeException e) {
 				System.out.println("Type checking error in a declaration: " + e.text);
 			}
@@ -174,6 +176,85 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitSTentry(STentry entry) throws TypeException {
 		if (print) printSTentry("type");
 		return ckvisit(entry.type); 
+	}
+	
+	//MOD: NEW VISITS
+	
+	@Override
+	public TypeNode visitNode(MinusNode n) throws TypeException {	//come PlusNode
+		if (print) printNode(n);
+		
+		if ( !(isSubtype(visit(n.left), new IntTypeNode())
+				&& isSubtype(visit(n.right), new IntTypeNode())) )
+			throw new TypeException("Non integers in minus",n.getLine());
+		
+		return new IntTypeNode();
+	}
+	
+	@Override
+	public TypeNode visitNode(DivNode n) throws TypeException {		//come TimesNode
+		if (print) printNode(n);
+		
+		if ( !(isSubtype(visit(n.left), new IntTypeNode())
+				&& isSubtype(visit(n.right), new IntTypeNode())) )
+			throw new TypeException("Non integers in division",n.getLine());
+		
+		return new IntTypeNode();
+	}
+	
+	@Override
+	public TypeNode visitNode(GreaterEqualNode n) throws TypeException {	//come EqualNode
+		if (print) printNode(n);
+		
+		TypeNode l = visit(n.left);
+		TypeNode r = visit(n.right);
+		
+		if ( !(isSubtype(l, r) || isSubtype(r, l)) )
+			throw new TypeException("Incompatible types in greater than equal",n.getLine());
+		
+		return new BoolTypeNode();
+	}
+	
+	@Override
+	public TypeNode visitNode(LessEqualNode n) throws TypeException {	//come EqualNode
+		if (print) printNode(n);
+		
+		TypeNode l = visit(n.left);
+		TypeNode r = visit(n.right);
+		if ( !(isSubtype(l, r) || isSubtype(r, l)) )
+			throw new TypeException("Incompatible types in less than equal",n.getLine());
+		
+		return new BoolTypeNode();
+	}
+	
+	@Override
+	public TypeNode visitNode(NotNode n) throws TypeException {
+		if (print) printNode(n);
+		
+		if ( !isSubtype(visit(n.exp), new BoolTypeNode()) )
+			throw new TypeException("Non boolean in not",n.getLine());
+		
+		return new BoolTypeNode();
+	}
+	
+	@Override
+	public TypeNode visitNode(OrNode n) throws TypeException {
+		if (print) printNode(n);
+		
+		if ( !(isSubtype(visit(n.left), new BoolTypeNode()) && isSubtype(visit(n.right), new BoolTypeNode())) )
+			throw new TypeException("Incompatible types in or",n.getLine());
+		
+		return new BoolTypeNode();
+	}
+	
+	@Override
+	public TypeNode visitNode(AndNode n) throws TypeException {
+		if (print) printNode(n);
+		
+		if ( !(isSubtype(visit(n.left), new BoolTypeNode()) && isSubtype(visit(n.right), new BoolTypeNode())) )
+			throw new TypeException("Incompatible types in and",n.getLine());
+		
+		return new BoolTypeNode();
 	}
 
 }

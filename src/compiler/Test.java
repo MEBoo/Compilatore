@@ -10,7 +10,7 @@ import svm.*;
 public class Test {
     public static void main(String[] args) throws Exception {
    			
-    	String fileName = "linsum.fool";
+    	String fileName = "base.fool";
 
     	CharStream chars = CharStreams.fromFileName(fileName);
     	FOOLLexer lexer = new FOOLLexer(chars);
@@ -42,8 +42,10 @@ public class Test {
     		TypeNode mainType = typeCheckVisitor.visit(ast);
     		System.out.print("Type of main program expression is: ");
     		new PrintEASTVisitor().visit(mainType);
+    
     	} catch (IncomplException e) {    		
     		System.out.println("Could not determine main program expression type due to errors detected before type checking.");
+    	
     	} catch (TypeException e) {
     		System.out.println("Type checking error in main program expression: "+e.text); 
     	}       	

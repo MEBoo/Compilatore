@@ -143,5 +143,64 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		printSTentry("offset "+entry.offset);
 		return null;
 	}
+	
+	//MOD: NEW VISITS
+	
+	@Override
+	public Void visitNode(MinusNode n) { 	// come plus
+		printNode(n);
+		visit(n.left);
+		visit(n.right);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(DivNode n) { 		// come times
+		printNode(n);
+		visit(n.left);
+		visit(n.right);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(GreaterEqualNode n) {  // come equal
+		printNode(n);
+		visit(n.left);
+		visit(n.right);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(LessEqualNode n) {  // come equal
+		printNode(n);
+		visit(n.left);
+		visit(n.right);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(NotNode n) {  // come equal
+		printNode(n);
+		visit(n.exp);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(OrNode n) {  
+		printNode(n);
+		visit(n.left);
+		visit(n.right);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(AndNode n) {  
+		printNode(n);
+		visit(n.left);
+		visit(n.right);
+		return null;
+	}
+
+	
 
 }
