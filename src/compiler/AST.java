@@ -26,7 +26,7 @@ public class AST {
 	}
 	
 	public static class FunNode extends DecNode {
-		final String id;
+		//final String id; //MOD - NEW SYMBOL TABLE MANAGEMENT
 		final TypeNode retType;
 		final List<ParNode> parlist;
 		final List<DecNode> declist; 
@@ -39,14 +39,14 @@ public class AST {
 	    	exp=e;
 	    }
 		
-		void setType(TypeNode t) {type = t;}
+		public void setType(TypeNode t) {type = t;}
 		
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
 
 	public static class ParNode extends DecNode {
-		final String id;
+		//final String id; //MOD - NEW SYMBOL TABLE MANAGEMENT
 		ParNode(String i, TypeNode t) {id = i; type = t;}
 
 		@Override
@@ -54,7 +54,7 @@ public class AST {
 	}
 	
 	public static class VarNode extends DecNode {
-		final String id;
+		//final String id;	//MOD - NEW SYMBOL TABLE MANAGEMENT
 		final Node exp;
 		VarNode(String i, TypeNode t, Node v) {id = i; type = t; exp = v;}
 

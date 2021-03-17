@@ -1,15 +1,29 @@
 let
-  var y:int = 5+2;
-  fun g:bool (b:bool)
+	var y:int = 8;
+	fun a:int()
+	y+4;
+	
+in
+	print (a());
+
+
+/*
+OPERATORI
+*/
+/*
+  let
+  var y:int = (8-2)*3/3;
+  fun g:bool (z:bool)
     let 
       fun f:bool (n:int, m:int)
         let 
           var x:int = m;
         in g(3==y);   
-    in if b then { f(2,3) } else { false };
+    in if (z || true) then { f(2,3) } else { false };
 in  
   print ( 
-    if g(true) 
-      then { y }
-      else { 10 }
+    if true
+      then { 5 }
+      else { 1 }
   );
+*/

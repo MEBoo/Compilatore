@@ -1,11 +1,45 @@
+/*
+CHECK PER TYPECHECKING COMPLICATI
+*/
 let
-  fun g:int(x:(int,int)->int)
-    x(5,7);
-  fun f:int(c:int)
+
+  	
+  fun f:int(x:(int,int)->bool,y:int)
     let
-      fun linsum:int(a:int,b:int)
-        (a+b)*c;
+    	var c:int=5;
+    	var z:(int,int)->bool=x;
+    	
+    in
+      if z(5,7) then { y+c } else { prova() };
+      
+  fun start:int(c:int)
+    let
+      fun linsum:bool(s:int,t:int)
+        ((s+t)*c >= 20);
+      fun linsum2:int(s:int,t:int,z:int)
+        (s+t)*c;
     in 
-      g(linsum);   
+      f(linsum,10);
+      
+  fun prova:int()
+  	1;
+  
 in
-  print(f(2));
+  print(start(2));
+
+  
+/* ORIGINALE DEL PROF
+let
+  fun f:int(x:(int,int)->int)
+    x(5,7);
+  fun start:int(c:int)
+    let
+      fun linsum:int(s:int,t:int)
+        (s+t)*c;
+    in 
+      f(linsum);   
+in
+  print(start(2));
+ */
+  
+  
