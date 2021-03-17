@@ -27,6 +27,7 @@ public class TypeRels {
 	}
 	
 	// valuta se il tipo "a" e' <= al tipo "b", dove "a" e "b" sono tipi di base: IntTypeNode o BoolTypeNode
+	// NB: BoolTypeNode < IntTypeNode 
 	public static boolean isSubtype(TypeNode a, TypeNode b) {
 		if (a instanceof ArrowTypeNode && b instanceof ArrowTypeNode)
 			return arrowIsCompatible((ArrowTypeNode)a,(ArrowTypeNode)b);

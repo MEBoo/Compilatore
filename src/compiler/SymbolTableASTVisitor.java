@@ -22,37 +22,15 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			entry = symTable.get(j--).get(id);	
 		return entry;
 	}
-	
-	public void addDec(Map<String, STentry> hm,DecNode n)
-	{
-		STentry entry = new STentry(nestingLevel,n.getType(),decOffset--);
-		
-		if (n.getType() instanceof ArrowTypeNode) 	//MOD: (HO) l'offset va decrementato di 2
-			decOffset--;
-		
-		//inserimento di ID nella symtable
-		if (hm.put(n.id, entry) != null) {
-			System.out.println("Var id " + n.id + " at line "+ n.getLine() +" already declared");
-			stErrors++;
-		}
-	}
 
 	@Override
 	public Void visitNode(ProgLetInNode n) {
 		if (print) printNode(n);
-		
 		Map<String, STentry> hm = new HashMap<>();
 		symTable.add(hm);
-		
-		//MOD - NEW SYMBOL TABLE MANAGEMENT
-		//aggiungo tutte le DEC prima di visitarle in modo da permettere internamente riferimenti incrociati
-	    for (DecNode dec : n.declist) 
-	    	addDec(hm,dec);
-	    
 	    for (Node dec : n.declist) 
 	    	visit(dec);
-
-	    visit(n.exp);
+		visit(n.exp);
 		symTable.remove(0);
 		return null;
 	}
@@ -68,15 +46,35 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	public Void visitNode(FunNode n) {
 		if (print) printNode(n);
 		
+		Map<String, STentry> hm = symTable.get(nestingLevel);
+		List<TypeNode> parTypes = new ArrayList<>();  
+		
+		for (ParNode par : n.parlist) parTypes.add(par.getType()); 
+		
+		n.setType(new ArrowTypeNode(parTypes,n.retType));   	//MOD: setto il tipo che non è settato come per gli altri DecNode nella fase ASTGeneration 
+																//     ha senso non settarlo durante l'ASTgeneration? Forse si perchè in quella fase vengono settati i tipi parsati
+																//	   questo invece è un tipo derivato dall'analisi del nodo, stessa cosa vale per il tipo di una "classe"
+
+		STentry entry = new STentry(nestingLevel,n.getType() ,decOffset);	//MOD (HO): l'offset va decrementato di 2 anziché di 1
+		decOffset-=2;
+		
+		//inserimento di ID nella symtable
+		if (hm.put(n.id, entry) != null) {
+			System.out.println("Fun id " + n.id + " at line "+ n.getLine() +" already declared");
+			stErrors++;
+		} 
+		
 		//creare una nuova hashmap per la symTable
 		nestingLevel++;
 		Map<String, STentry> hmn = new HashMap<>();
 		symTable.add(hmn);
+		int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level 
+		decOffset=-2;
 		
 		int parOffset=1;
 		for (ParNode par : n.parlist) {
 			
-			if (par.getType() instanceof ArrowTypeNode) //MOD (HO): l'offset va incrementato di 2 anzichè 1 - lo pre-incremento per usare lo slot aggiuntivo necessario
+			if(par.getType() instanceof ArrowTypeNode) //MOD (HO): l'offset va incrementato di 2 anzichè 1 - lo pre-incremento per usare lo slot aggiuntivo necessario
 				parOffset++;
 			
 			if (hmn.put(par.id, new STentry(nestingLevel,par.getType(),parOffset++)) != null) {
@@ -85,27 +83,29 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			}
 		}
 		
-		//int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level 
-		decOffset=-2;
-		for (DecNode dec : n.declist) 
-	    	addDec(hmn,dec);
-
-		for (Node dec : n.declist) 
-	    	visit(dec);
-	    
+		for (Node dec : n.declist) visit(dec);
 		visit(n.exp);
 		//rimuovere la hashmap corrente poiche' esco dallo scope               
 		symTable.remove(nestingLevel--);
-		//decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level 
+		decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level 
 		return null;
 	}
-	
 	
 	@Override
 	public Void visitNode(VarNode n) {
 		if (print) printNode(n);
 		visit(n.exp);
+		Map<String, STentry> hm = symTable.get(nestingLevel);
+		STentry entry = new STentry(nestingLevel,n.getType(),decOffset--);
 		
+		if(n.getType() instanceof ArrowTypeNode) 	//MOD: (HO) l'offset va decrementato di 2
+			decOffset--;
+		
+		//inserimento di ID nella symtable
+		if (hm.put(n.id, entry) != null) {
+			System.out.println("Var id " + n.id + " at line "+ n.getLine() +" already declared");
+			stErrors++;
+		}
 		return null;
 	}
 

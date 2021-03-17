@@ -125,21 +125,18 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitFundec(FundecContext c) {
 		if (print) printVarAndProdName(c);
 		List<ParNode> parList = new ArrayList<>();
-		List<TypeNode> parTypes = new ArrayList<>();  			//MOD: NEW SYMBOL TABLE MANAGEMENT
 		
 		for (int i = 1; i < c.ID().size(); i++) { 
 			ParNode p = new ParNode(c.ID(i).getText(),(TypeNode) visit(c.hotype(i-1))); //MOD: hotype
-			parTypes.add(p.getType()); 							//MOD: NEW SYMBOL TABLE MANAGEMENT
 			p.setLine(c.ID(i).getSymbol().getLine());
 			parList.add(p);
 		}
 		
 		List<DecNode> decList = new ArrayList<>();
 		for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
-		FunNode n = null;										//MOD: NEW SYMBOL TABLE MANAGEMENT
+		Node n = null;										
 		if (c.ID().size()>0) { //non-incomplete ST
 			n = new FunNode(c.ID(0).getText(),(TypeNode)visit(c.type()),parList,decList,visit(c.exp()));
-			n.setType(new ArrowTypeNode(parTypes,n.retType));   //MOD: NEW SYMBOL TABLE MANAGEMENT
 			n.setLine(c.FUN().getSymbol().getLine());
 		}
         return n;
