@@ -3,14 +3,13 @@ CHECK PER TYPECHECKING COMPLICATI
 */
 let
 
-  	
   fun f:int(x:(int,int)->bool,y:int)
     let
     	var c:int=5;
     	var z:(int,int)->bool=x;
     	
     in
-      if z(5,7) then { y+c } else { prova() };
+      if z(5,7) then { y+c } else { 2 };
       
   fun start:int(c:int)
     let
@@ -19,16 +18,16 @@ let
       fun linsum2:int(s:int,t:int,z:int)
         (s+t)*c;
     in 
-      f(linsum,10);
+      f(linsum2,10);
       
-  fun prova:int()
-  	1;
+ 
   
 in
   print(start(2));
 
   
-/* ORIGINALE DEL PROF
+/* ORIGINALE DEL PROF */
+/*
 let
   fun f:int(x:(int,int)->int)
     x(5,7);
@@ -37,7 +36,8 @@ let
       fun linsum:int(s:int,t:int)
         (s+t)*c;
     in 
-      f(linsum);   
+      f(linsum);  
+   
 in
   print(start(2));
  */

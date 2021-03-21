@@ -49,5 +49,5 @@ let
                                 new List(2,
                                     new List(5,null))))));
   
-in printList(quicksort(l,dec));
+in printList(quicksort(l,inc));
 

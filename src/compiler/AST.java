@@ -39,7 +39,7 @@ public class AST {
 	    	exp=e;
 	    }
 		
-		public void setType(TypeNode t) {type = t;}
+		public void setType(TypeNode t) {type = t;}   // usato da SymbolTable durante la visita per settare il tipo "ArrowTypeNode".
 		
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
@@ -236,6 +236,130 @@ public class AST {
 	
 	//MOD: OBJECT ORIENTED
 	
+	public static class ClassNode extends DecNode {
+		final String id;
+		final List<FieldNode> fields; 	// fields privati e non modificabili (come le var)
+		final List<MethodNode> methods; // metodi sempre pubblici 
+		final String superID; 			// ID della classe da cui eredita (null se non eredita)
+		STentry superEntry;				// entry super-classe
+		
+		ClassNode(final String id, final List<FieldNode> fields, final List<MethodNode> methods, final String superID) {
+			this.id = id;
+	    	this.fields = Collections.unmodifiableList(fields);
+	    	this.methods = Collections.unmodifiableList(methods);
+	    	this.superID = superID;
+	    }
+		
+		public void setType(TypeNode t) {type = t;}		// usato da SymbolTable durante la visita per settare il tipo ClassTypeNode
+		
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {return visitor.visitNode(this);}
+	}
 	
+	public static class FieldNode extends DecNode { 	// simile a VarNode
+		final String id; 
+		int offset;
+		
+		FieldNode(String i, TypeNode t) {id = i; type = t;}
+
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
+	
+	public static class MethodNode extends DecNode {	// simile a FunNode
+		final String id; 
+		final TypeNode retType;
+		final List<ParNode> parlist;
+		final List<DecNode> declist; 
+		final Node exp;
+		int offset;
+		String label; 
+		
+		MethodNode(String i, TypeNode rt, List<ParNode> pl, List<DecNode> dl, Node e) {
+	    	id=i; 
+	    	retType=rt; 
+	    	parlist=Collections.unmodifiableList(pl); 
+	    	declist=Collections.unmodifiableList(dl); 
+	    	exp=e;
+	    }
+		
+		public void setType(TypeNode t) {type = t;}  // usato da SymbolTable durante la visita per settare il tipo "ArrowTypeNode".
+		
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
+	
+	public static class ClassCallNode extends Node { // simile a CallNode ma viene eseguita una chiamata del tipo ID1.ID2()
+		final String refID;		// ID di una Var di tipo RefTypeNode con RefTypeNode.id== ID della classe da usare per la chiamata
+		final String methodID;  // ID del methodo da chiamare
+		final List<Node> arglist;
+		STentry entry;
+		STentry methodEntry;
+		int nl;
+		ClassCallNode(String rID,String mID, List<Node> p) {
+			refID = rID; 
+			methodID = mID;
+			arglist = Collections.unmodifiableList(p);
+		}
+
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
+	
+	public static class NewNode extends Node {		// simile a CallNode
+		final String id;	// ID della classe
+		final List<Node> arglist;
+		STentry entry;
+		int nl;
+		NewNode(String i, List<Node> p) {
+			id = i; 
+			arglist = Collections.unmodifiableList(p);
+		}
+
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
+	
+	public static class EmptyNode extends Node {	// serve per gestire i "null" value --> ES: a==null
+		
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
+	
+	public static class ClassTypeNode extends TypeNode {	// type per la classe costituito da campi + metodi in ordine di apparizione
+		final List<TypeNode> allFields;
+		final List<ArrowTypeNode> allMethods;
+		ClassTypeNode(final List<TypeNode> fieldsTypes, final List<ArrowTypeNode> methodsTypes) {
+			allFields = fieldsTypes; 
+			allMethods = methodsTypes;
+		}
+		
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
+	
+	public static class MethodTypeNode extends TypeNode {	// Wrapper di un ArrowTypeNode : ci serve per distinguere un metodo da una funzione
+		ArrowTypeNode fun;
+		MethodTypeNode(ArrowTypeNode f) {
+			fun = f;
+		}
+		
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
+	
+	public static class RefTypeNode extends TypeNode {      // var a:ClasseA;  ====> VarNode("a"):RefTypeNode("ClasseA");
+		final String id;			// ID di una Classe dichiarata
+		RefTypeNode(String i) {
+			id = i;
+		}
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
+	
+	public static class EmptyTypeNode extends TypeNode {
+		@Override
+		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+	}
 
 }

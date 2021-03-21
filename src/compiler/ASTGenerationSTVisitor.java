@@ -46,6 +46,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitLetInProg(LetInProgContext c) {
 		if (print) printVarAndProdName(c);
 		List<DecNode> declist = new ArrayList<>();
+		for (CldecContext cla : c.cldec()) declist.add((DecNode)visit(cla));	//MOD (OO): se ci sono classi vengono dichiarate prima delle altre dec
 		for (DecContext dec : c.dec()) declist.add((DecNode) visit(dec));
 		return new ProgLetInNode(declist, visit(c.exp()));
 	}
@@ -256,4 +257,102 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		n.setLine(c.ARROW().getSymbol().getLine());
 		return n;
 	}
+	
+	// OBJECT ORIENTED
+	
+	@Override
+	public Node visitCldec(CldecContext c) { // nelle classi di FOOL i fields sono tutti dichiarati similmente ai pars delle funzioni: ClasseA (field1:int, field2:bool)
+		if (print) printVarAndProdName(c);
+		
+		String superID = null;
+		int startIndex = 1;
+		
+		if(c.EXTENDS() != null) {
+			superID = c.ID(1).getSymbol().getText();
+			startIndex = 2;		// se la classe estende, gli ID dei fields partono dall'indice 2 anzichè dall'indice 1
+		}
+
+		List<FieldNode> fields = new ArrayList<>();
+		for (int i = startIndex; i < c.ID().size(); i++) {
+			FieldNode f = new FieldNode(c.ID(i).getText(), (TypeNode) visit(c.type(i-startIndex))); // i type dei fields partono sempre dall'indice 0
+			f.setLine(c.ID(i).getSymbol().getLine());
+			fields.add(f);
+		}
+		
+		List<MethodNode> methods = new ArrayList<>();
+		for (MethdecContext dec : c.methdec()) methods.add((MethodNode)visit(dec));
+		
+		Node n = null;
+		if (c.ID().size()>0) { //non-incomplete ST
+			n = new ClassNode(c.ID(0).getText(), fields, methods, superID);
+			n.setLine(c.ID(0).getSymbol().getLine());
+		}
+        return n;
+	}
+	
+	@Override
+	public Node visitMethdec(MethdecContext c) {	// esattamente come FunDec
+		if (print) printVarAndProdName(c);
+		
+		List<ParNode> parList = new ArrayList<>();
+		for (int i = 1; i < c.ID().size(); i++) {
+			ParNode p = new ParNode(c.ID(i).getText(), (TypeNode) visit(c.hotype(i-1)));
+			p.setLine(c.ID(i).getSymbol().getLine());
+			parList.add(p);
+		}
+		
+		List<DecNode> decList = new ArrayList<>();
+		for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
+		
+		Node n = null;
+		if (c.ID().size()>0) { //non-incomplete ST
+			n = new MethodNode(c.ID(0).getText(),(TypeNode) visit(c.type()),parList,decList,visit(c.exp()));
+			n.setLine(c.FUN().getSymbol().getLine());
+		}
+        return n;
+	}
+	
+	@Override
+	public Node visitDotCall(DotCallContext c) { // chiamata di un metodo: ID1.ID2(par1,pars2) - Simile a call
+		if (print) printVarAndProdName(c);
+		
+		List<Node> arglist = new ArrayList<>(); // lista argomenti da passare alla chiamata del metodo
+		for (ExpContext arg : c.exp()) arglist.add(visit(arg));
+		
+		Node n = new ClassCallNode(c.ID(0).getText(), c.ID(1).getText(), arglist); // il primo ID è un refTypeNode (che all'interno contiene l'ID della classe a cui si riferisce)
+		n.setLine(c.ID(0).getSymbol().getLine());
+		return n;
+	}
+	
+	@Override
+	public Node visitNew(NewContext c) {	// simile a call (le classi di Fool non hanno costruttori, ogni field è passato come argomento con il new)
+		if (print) printVarAndProdName(c);
+		
+		List<Node> arglist = new ArrayList<>();
+		for (ExpContext arg : c.exp()) arglist.add(visit(arg));
+		
+		Node n = new NewNode(c.ID().getText(), arglist);	// ID = ID della classe
+		n.setLine(c.ID().getSymbol().getLine());
+		return n;
+	}
+	
+	@Override
+	public Node visitIdType(IdTypeContext c) {
+		if (print) printVarAndProdName(c);
+		
+		RefTypeNode n = new RefTypeNode(c.ID().getText());
+		n.setLine(c.ID().getSymbol().getLine());
+		return n;
+	}
+	
+	@Override
+	public Node visitNull(NullContext c) {
+		if (print) printVarAndProdName(c);
+		
+		Node n = new EmptyNode();
+		n.setLine(c.NULL().getSymbol().getLine());
+		return n;
+	}
+	
+	
 }

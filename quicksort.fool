@@ -1,3 +1,17 @@
+/*
+let
+
+  class List (f:int, r:List) {
+    fun first:int() f;
+    fun rest:List() r; 
+  }
+  
+  var l:List = new List(5, null);
+  var a:int = 2;
+    
+in print(l.first());
+*/
+
 let
 
   class List (f:int, r:List) {
@@ -17,7 +31,6 @@ let
       if (l1 == null)
         then {l2}
         else {new List(l1.first(), append(l1.rest(),l2))} ;  
-    
   /* filtra la lista "l" mantenendo solo gli elementi */
   /* che sono: <= a "pivot", se "before" è true       */
   /*            > a "pivot", se "before" è false      */

@@ -1,5 +1,7 @@
 package compiler;
 
+import static compiler.lib.FOOLlib.extractNodeName;
+
 import compiler.AST.*;
 import compiler.lib.*;
 import compiler.exc.*;
@@ -146,6 +148,8 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 	
 	//MOD: NEW VISITS
 	
+	// OPERATORS
+	
 	@Override
 	public Void visitNode(MinusNode n) { 	// come plus
 		printNode(n);
@@ -200,7 +204,85 @@ public class PrintEASTVisitor extends BaseEASTVisitor<Void,VoidException> {
 		visit(n.right);
 		return null;
 	}
-
+	
+	// OO
+	
+	@Override
+	public Void visitNode(ClassNode n) {
+		printNode(n, n.id);
+		for (Node f: n.fields) visit(f);
+		for (Node m: n.methods) visit(m);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(FieldNode n) {
+		printNode(n,n.id);
+		visit(n.getType());
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(MethodNode n) {
+		printNode(n,n.id);
+		visit(n.retType);
+		for (ParNode par : n.parlist) visit(par);
+		for (Node dec : n.declist) visit(dec);
+		visit(n.exp);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(ClassCallNode n) {
+		printNode(n,n.refID+"."+n.methodID+" at nestinglevel "+n.nl); 
+		System.out.println(indent+"  Ref:");
+		visit(n.entry,"  ");
+		System.out.println(indent+"  Method:");
+		visit(n.methodEntry,"  ");
+		for (Node arg : n.arglist) visit(arg);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(NewNode n) {
+		printNode(n,n.id+" at nestinglevel "+n.nl); 
+		visit(n.entry);
+		for (Node arg : n.arglist) visit(arg);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(EmptyNode n) {
+		printNode(n);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(ClassTypeNode n) {
+		printNode(n);
+		for (Node f: n.allFields) visit(f);
+		for (Node m: n.allMethods) visit(m);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(MethodTypeNode n) {
+		printNode(n);
+		visit(n.fun); 
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(RefTypeNode n) {
+		printNode(n, n.id);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(EmptyTypeNode n) {
+		printNode(n);
+		return null;
+	}
 	
 
 }
