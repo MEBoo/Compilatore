@@ -58,6 +58,8 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 																//     ha senso non settarlo durante l'ASTgeneration? Forse si perchè in quella fase vengono settati i tipi parsati
 																//	   questo invece è un tipo derivato dall'analisi del nodo, stessa cosa vale per il tipo di una "classe"
 
+		visit(n.getType()); 									//MOD: verifico se è coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
+		
 		STentry entry = new STentry(nestingLevel,n.getType() ,decOffset);	//MOD (HO): l'offset va decrementato di 2 anziché di 1
 		decOffset-=2;
 		
@@ -99,8 +101,10 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		if (print) printNode(n);
 		visit(n.exp);
 		Map<String, STentry> hm = symTable.get(nestingLevel);
-		STentry entry = new STentry(nestingLevel,n.getType(),decOffset--);
 		
+		visit(n.getType()); 						//MOD: verifico se è coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
+		
+		STentry entry = new STentry(nestingLevel,n.getType(),decOffset--);
 		if(n.getType() instanceof ArrowTypeNode) 	//MOD: (HO) l'offset va decrementato di 2
 			decOffset--;
 		
@@ -254,31 +258,6 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	
 	// OBJECT ORIENTED
 	
-	private boolean checkRefTypeID(TypeNode t) {
-		if(t instanceof ArrowTypeNode) {
-			
-			boolean checkRet=checkRefTypeID(((ArrowTypeNode)t).ret);
-			boolean checkPars=true;
-			
-			// verifico tutti i par così da mostrare tutti gli eventuali errori 
-			for(TypeNode p : (((ArrowTypeNode)t).parlist) ) {
-				if (!checkRefTypeID(p))
-					checkPars=false;
-			}
-			
-			return checkRet && checkPars;
-			
-		} else if(t instanceof RefTypeNode) {
-			String c = ((RefTypeNode)t).id;
-			if(!(classTable.containsKey(c))) {
-				System.out.println("Class " +c+ " not declared at line "+ t.getLine() +"");
-				stErrors++;
-			} else 
-				return true;
-		}
-		return true;
-	}
-	
 	@Override
 	public Void visitNode(ClassNode n) {
 		if (print) printNode(n, n.id);
@@ -340,13 +319,13 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		// i fields vengono gestiti similmente ai parametri di una funzione - non viene eseguita la visita (non ci sono espressioni da valutare)
 		for (FieldNode f : n.fields) {
 			
-			if (locals.contains(f.id)) {	// OTTIMIZZAZIONE: nomi di campi o metodi non possono essere dichiarati 2 volte in una stessa classe
+			if (locals.contains(f.id)) {				// OTTIMIZZAZIONE: nomi di campi o metodi non possono essere dichiarati 2 volte in una stessa classe
 				System.out.println("Field id " + f.id + " at line "+ f.getLine() +" already declared");
 				stErrors++;
 				continue;
-			} else if (!checkRefTypeID(f.getType())) {
-				continue;
-			}
+			} 
+			
+			visit(f.getType()); 						//MOD: verifico se è coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
 			
 			locals.add(f.id);
 		
@@ -390,11 +369,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 				System.out.println("Method id " + m.id + " at line "+ m.getLine() +" already declared");
 				stErrors++;
 				continue;
-			} else if (!checkRefTypeID(m.getType())) {
-				//System.out.println("Class type not declared for method id " + m.id + " at line "+ m.getLine() +"");
-				//stErrors++;
-				continue;
-			}
+			} 
 			
 			// check overriding: se è un overriding di un NON MethodTypeNode skippo il metodo direttamente
 			boolean overriding=false;
@@ -444,13 +419,15 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		
 		n.setType(new MethodTypeNode(new ArrowTypeNode(parTypes, n.retType)));
 		
+		visit(n.getType()); 										//MOD: verifico se è coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
+		
 		STentry entry = null;
 		
-		if(hm.containsKey(n.id)) {													// overriding - il controllo circa la possibilità è già fatto da ClassNode
+		if(hm.containsKey(n.id)) {									// overriding - il controllo circa la possibilità è già fatto da ClassNode
 			STentry superMethodEntry = hm.get(n.id);
-			n.offset=superMethodEntry.offset;										// uso l'offset precedente	
+			n.offset=superMethodEntry.offset;						// uso l'offset precedente	
 		} else {
-			n.offset=decOffset++;													// gli offset dei (nuovi) metodi vengono incrementati
+			n.offset=decOffset++;									// gli offset dei (nuovi) metodi vengono incrementati
 		}
 		
 		entry = new STentry(nestingLevel, n.getType(), n.offset); 
@@ -533,16 +510,56 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	}
 	
 	@Override
-	public Void visitNode(RefTypeNode n) {
-		if(print) printNode(n);
-		System.out.println("TROVATO");
-		return null;
-	}
-	
-	@Override
 	public Void visitNode(EmptyNode n) {
 		if(print) printNode(n);
 		return null;
 	}
-
+	
+	// MOD: nelle dichiarazioni visito i tipi in modo che se arrivo ad un RefTypeNode posso verificare l'esistenza della classe
+	
+	@Override
+	public Void visitNode(IntTypeNode n) {
+		if(print) printNode(n);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(BoolTypeNode n) {
+		if(print) printNode(n);
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(ArrowTypeNode n) {
+		if(print) printNode(n);
+		
+		for (int i=0;i<n.parlist.size();i++)
+		{
+			visit(n.parlist.get(i));
+		}
+		visit(n.ret);
+		
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(MethodTypeNode n) {
+		if(print) printNode(n);
+		
+		visit(n.fun);
+		
+		return null;
+	}
+	
+	@Override
+	public Void visitNode(RefTypeNode n) {
+		if(print) printNode(n);
+		
+		String c = n.id;
+		if(!(classTable.containsKey(c))) {
+			System.out.println("Type " +c+ " not declared at line "+ n.getLine());
+			stErrors++;
+		}
+		return null;
+	}
 }
