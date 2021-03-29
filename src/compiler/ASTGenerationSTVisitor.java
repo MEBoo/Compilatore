@@ -96,7 +96,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		if (print) printVarAndProdName(c);
 		List<ParNode> parList = new ArrayList<>();
 		for (int i = 1; i < c.ID().size(); i++) { 
-			ParNode p = new ParNode(c.ID(i).getText(),(TypeNode) visit(c.type(i)));
+			ParNode p = new ParNode(c.ID(i).getText(),(TypeNode) visit(c.hotype(i)));
 			p.setLine(c.ID(i).getSymbol().getLine());
 			parList.add(p);
 		}
@@ -104,7 +104,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
 		Node n = null;
 		if (c.ID().size()>0) { //non-incomplete ST
-			n = new FunNode(c.ID(0).getText(),(TypeNode)visit(c.type(0)),parList,decList,visit(c.exp()));
+			n = new FunNode(c.ID(0).getText(),(TypeNode)visit(c.type()),parList,decList,visit(c.exp())); 
 			n.setLine(c.FUN().getSymbol().getLine());
 		}
         return n;
