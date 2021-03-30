@@ -1,5 +1,5 @@
 push 0
-push 5
+push 1
 push 2
 add
 push function1

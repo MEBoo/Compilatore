@@ -177,4 +177,115 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		if (print) printNode(n,n.val.toString());
 		return "push "+n.val;
 	}
+	
+	//MOD: NEW GENERATION
+	
+	//OPERATORS
+	
+	@Override
+	public String visitNode(MinusNode n) { // simile a add
+		if (print) printNode(n);
+		return nlJoin(
+			visit(n.left),
+			visit(n.right),
+			"sub"				
+		);
+	}
+	
+	@Override
+	public String visitNode(DivNode n) {  // simile a times
+		if (print) printNode(n);
+		return nlJoin(
+			visit(n.left),
+			visit(n.right),
+			"div"
+		);	
+	}
+	
+	@Override
+	public String visitNode(GreaterEqualNode n) { // simile a equal
+		if (print) printNode(n);
+	 	String l1 = freshLabel();
+	 	String l2 = freshLabel();
+		return nlJoin(
+			visit(n.right),  // inverto gli argomenti rispetto a equal/less equal
+			visit(n.left),
+			"bleq "+l1,		// uso bleq invece di beq
+			"push 0",
+			"b "+l2,
+			l1+":",
+			"push 1",
+			l2+":"
+		);
+	}
+	
+	@Override
+	public String visitNode(LessEqualNode n) { // simile a equal
+		if (print) printNode(n);
+	 	String l1 = freshLabel();
+	 	String l2 = freshLabel();
+		return nlJoin(
+			visit(n.left), 
+			visit(n.right),
+			"bleq "+l1,		// uso bleq invece di beq
+			"push 0",
+			"b "+l2,
+			l1+":",
+			"push 1",
+			l2+":"
+		);
+	}
+	
+	@Override
+	public String visitNode(NotNode n) { 
+		if (print) printNode(n);
+		return nlJoin(
+			"push 1",		// eseguo l'operazione 1 - n.exp
+			visit(n.exp),	// assumo che n.exp sia sicuramente un bool quindi: 0 oppure 1. 
+			"sub"			// la soluzione alternativa è usare beq ma richiede più istruzioni	
+		);
+	}
+	
+	@Override
+	public String visitNode(OrNode n) { // check di ogni argomento a true
+		if (print) printNode(n);
+	 	String l1 = freshLabel();
+	 	String l2 = freshLabel();
+		return nlJoin(
+			"push 1",		// check primo argomento - se questo è true non valuto il secondo argomento 
+			visit(n.left),
+			"beq "+l2,		
+			"push 1",		// check secondo argomento
+			visit(n.right),
+			"beq "+l2,		
+			"push 0",		// false
+			"b " + l1,
+			l2+":",			
+			"push 1",		// true
+			l1+":"
+		);
+	}
+	
+	@Override
+	public String visitNode(AndNode n) {  // faccio il contrario di OR - check degli argomenti a false 
+		if (print) printNode(n);
+	 	String l1 = freshLabel();
+	 	String l2 = freshLabel();
+		return nlJoin(
+			"push 0",		// check primo argomento - se questo è false non valuto il secondo argomento
+			visit(n.left),
+			"beq "+l2,		
+			"push 0",		// check secondo argomento
+			visit(n.right),
+			"beq "+l2,		
+			"push 1",		// true
+			"b " + l1,
+			l2+":",			
+			"push 0",		// false
+			l1+":"
+		);
+	}
+
+	// NOTA su AND & OR : entrambe le procedure si potrebbero implementare più brevi seguendo il metodo usato per NOT (con sub / add)
+	// Tuttavia così facendo si valuterebbero sempre entrambi gli argomenti, cosa che gli altri linguaggi in genere non fanno.
 }

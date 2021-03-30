@@ -1,0 +1,11 @@
+let
+  var x:int = 3+2;
+  var y:int = 7-2;
+  var div:bool = false;
+  fun f:int (a:int, b:bool)
+    let 
+      var x:int = 2;
+    in 
+      if(div || b) then { a*x } else { a/x };
+in  
+  print ( f(x+y,false) );
