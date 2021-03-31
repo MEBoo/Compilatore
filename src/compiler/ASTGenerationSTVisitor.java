@@ -241,4 +241,20 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		
 		return n;
 	}
+	
+	// HIGHER ORDER
+	
+	@Override
+	public Node visitArrow(ArrowContext c) { // hotype di tipo arrow esempio: (hotype,hotype)=>type 
+		if (print) printVarAndProdName(c);
+		
+		//BROCCI: non sono parNode come su funzione ma semplici typeNode perchè la sintassi è x:(int,int)->int e non x(a:int,b:int)->int 
+		List<TypeNode> parList = new ArrayList<>();	 // carico i parametri che sono hotype (quindi ricorsivamente potrebbero anche essere di tipo arrow)
+		for (int i = 0; i < c.hotype().size(); i++)
+			parList.add((TypeNode) visit(c.hotype(i)));
+		
+		Node n = new ArrowTypeNode(parList, (TypeNode)visit(c.type()));  // il ritorno è sempre type
+		n.setLine(c.ARROW().getSymbol().getLine());
+		return n;
+	}
 }

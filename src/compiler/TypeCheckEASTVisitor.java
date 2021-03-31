@@ -87,6 +87,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		if (print) printNode(n);
 		TypeNode l = visit(n.left);
 		TypeNode r = visit(n.right);
+		
+		if (l instanceof ArrowTypeNode || r instanceof ArrowTypeNode)				//MOD (HO)
+			throw new TypeException("ArrowTypes are not comparable",n.getLine());
+		
 		if ( !(isSubtype(l, r) || isSubtype(r, l)) )
 			throw new TypeException("Incompatible types in equal",n.getLine());
 		return new BoolTypeNode();
@@ -129,8 +133,10 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(IdNode n) throws TypeException {
 		if (print) printNode(n,n.id);
 		TypeNode t = visit(n.entry); 
-		if (t instanceof ArrowTypeNode)
-			throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine());
+		
+		//if (t instanceof ArrowTypeNode)
+		//	throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine()); //MOD HO
+		
 		return t;
 	}
 
@@ -208,7 +214,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		
 		TypeNode l = visit(n.left);
 		TypeNode r = visit(n.right);
-		
+			
 		if (l instanceof ArrowTypeNode || r instanceof ArrowTypeNode)				// check introdotto con supporto a HO
 			throw new TypeException("ArrowTypes are not comparable",n.getLine());
 		
@@ -245,7 +251,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	}
 	
 	@Override
-	public TypeNode visitNode(OrNode n) throws TypeException { //BROCCI: IntType invece di BoolType così si può fare if(check && 1)
+	public TypeNode visitNode(OrNode n) throws TypeException { 
 		if (print) printNode(n);
 		
 		if ( !(isSubtype(visit(n.left), new BoolTypeNode()) && isSubtype(visit(n.right), new BoolTypeNode())) )

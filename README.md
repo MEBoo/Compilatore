@@ -48,6 +48,8 @@ In LL le CFG devono essere:
 - non ricorsiva a sinistra
 - non ambigua
 
+ANTLR gestisce una grammatica estesa con EBNF (RE dentro la grammatica) ma è del tutto equivalente con una CFG
+
 ## Analisi Semantica
 
 1. Top-Down: controllare ID con le dichiarazioni attraverso la Symbol Table costruita durante la generazione del EAST (Kind, Type, Nesting level...)
@@ -110,6 +112,8 @@ Legenda...
 
 	Visito ST e genero AST producendo i nodi
 
+	Su Java il dynamic binding non c'è sui parametri ma solo sui soggetti
+
 	Return Node
 
 - SymbolTableASTVisitor
@@ -143,7 +147,7 @@ Legenda...
 - CodeGenerationASTvisitor
 
 	Bottom-up
-	
+
 	Return string (codice del programma da passare alla virtual machine)
 
 ## Operatori aggiuntivi
@@ -166,8 +170,69 @@ f:bool (x:(int, int) -> bool, a:int, b:int) {
 }
 ```
 
+Per prima cosa era già stata aggiunta la variabile non-terminale hotype sulla GFG che può essere un type base (bool, int) oppure una arrow (function)
+
 Il problema è settare AL della funzione perchè è dinamico ed è una info del chiamante.
 
 Faccio una closur (pacchetto di info) con:
-- address x_entry
-- AR dove x è dichiarato
+- AR dove x è dichiarato -> [a offset messo in symbol table] indirizzo FP di AR dichiarazione funzione 
+- address x_entry -> [a offset messo in symbol table-1] indirizzo funzione per invocere il suo codice
+
+Il layout AR rimane invariato ma ora qualsiasi ID con tipo funzionale occupa spazio doppio
+
+1. SU AST il nodo ArrowTypeNode esisteva già e veniva utilizzato per le funzioni, ora lo usiamo anche per le funzioni passate per argomento
+2. Implementata la visita "visitArrow" su ASTGenerationSTVisitor
+
+	- i parametri non sono parNode come su funzione ma semplici typeNode perchè la sintassi è x:(int,int)->int e non x(a:int,b:int)->int
+
+3. Modificata la visita di FunNode e VarNode per gestire gli offset doppi nel caso di arrowTypeNode su "SymbolTableEASTVisitor"
+
+	- il decOffset su funNode va decrementato sempre di 2 perchè ora occupa 2 spazi (sempre)
+	- il parOffset su funNode viene pre incrementato perchè lo stack cresce verso il basso, quindi l'offset a cui assegno la entry è quello successivo e quando creo AR inizio a scrivere da n-esimo par in giù
+	- il decOffset su varNode va post decrementato perchè lo stack cresce verso il basso, quindi prima segno il punto in cui mettere l'indirizzo e poi alloco uno spazio. quando creo AR scrivo da 1 dec in su
+
+4. Su TypeCheckEASTVisitor permetto che gli idNode siano ArrowType mentre blocco questa possibilità su ==, <=, >= (non ha senso)
+
+5. Aggiunto controllo su arrowtype in TypeRels per il typechecking (covarianza ritorno, controvarianza parametri)
+
+	- covarianza: permette di usare un tipo più derivato di quello specificato, serve a preservare la relazione di sottotipi
+	- controvarianza: permette di utilizzare un tipo più generico di quello specificato
+
+	```
+	Class Animal { eat() }
+	Class Bird extends Animal { fly() }
+
+	Eat(a:Animal) { a.eat() }
+	Fly(b:Bird) { b.fly() }
+
+	AnimalDelegate(a:Animal) 
+	BirdDelegate(b:Bird) 
+
+	BirdDelegate d1 = Eat
+	foo(new Bird())
+	// OK, Eat usa sovratipo animal e lo posso passare dvoe è richiesto un bird
+	perchè lancia la funzione mangia, tutti gli animali mangiano
+
+	AnimalDelegate d2 = Fly
+	foo(new Animal())
+	// ERROR, non posso passare una funzione che accetta sottoclasse ad una con la sovraclasse, non tutti gli animali volano
+	```
+
+	```
+	z:(mezzo)->car
+	a:(car)->car
+	b:(ford)->car
+
+	fun pippo:car( c:(car)->car ){
+		c(car)
+	}
+
+	pippo(z) OK
+	pippo(a) OK
+	pippo(b) NO
+	```
+6. CodeGenerationASTvisitor
+
+	- FunNode (pulisco bene la casa nel caso di par/var arrowType) e faccio la closure
+	- CallNode (la chiamata deve usare come access link il puntatore dell'AR impacchettato nell'ID in chiamata)
+	- IdNode (tengo in considerazione la closure)
