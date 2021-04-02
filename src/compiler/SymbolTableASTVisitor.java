@@ -10,7 +10,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	
 	private List<Map<String, STentry>> symTable = new ArrayList<>();
 	private Map<String, Map<String,STentry> > classTable = new HashMap<>(); //MOD (OO): per ogni classe dichiarata vado a memorizzare campi e metodi
-																			//          serve per poter effettuare l'estensione di una classe
+																			//          serve per poter effettuare l'estensione di una classe altrimenti quando esco da ogni nl perdo le informazioni perchÃ¨ rimuovo le symboltable
 	private int nestingLevel=0; // current nesting level
 	private int decOffset=-2; // counter for offset of local declarations at current nesting level 
 	int stErrors=0;
@@ -54,13 +54,13 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		
 		for (ParNode par : n.parlist) parTypes.add(par.getType()); 
 		
-		n.setType(new ArrowTypeNode(parTypes,n.retType));   	//MOD: setto il tipo che non è settato come per gli altri DecNode nella fase ASTGeneration 
-																//     ha senso non settarlo durante l'ASTgeneration? Forse si perchè in quella fase vengono settati i tipi parsati
-																//	   questo invece è un tipo derivato dall'analisi del nodo, stessa cosa vale per il tipo di una "classe"
+		n.setType(new ArrowTypeNode(parTypes,n.retType));   	//MOD: setto il tipo che non ï¿½ settato come per gli altri DecNode nella fase ASTGeneration 
+																//     ha senso non settarlo durante l'ASTgeneration? Forse si perchï¿½ in quella fase vengono settati i tipi parsati
+																//	   questo invece ï¿½ un tipo derivato dall'analisi del nodo, stessa cosa vale per il tipo di una "classe"
 
-		visit(n.getType()); 									//MOD: verifico se è coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
+		visit(n.getType()); 									//MOD: verifico se ï¿½ coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
 		
-		STentry entry = new STentry(nestingLevel,n.getType() ,decOffset);	//MOD (HO): l'offset va decrementato di 2 anziché di 1
+		STentry entry = new STentry(nestingLevel,n.getType() ,decOffset);	//MOD (HO): l'offset va decrementato di 2 anzichï¿½ di 1 (ora tutte le funzioni occupano due spazi su AR)
 		decOffset-=2;
 		
 		//inserimento di ID nella symtable
@@ -77,7 +77,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		int parOffset=1;
 		for (ParNode par : n.parlist) {
 			
-			if(par.getType() instanceof ArrowTypeNode) //MOD (HO): l'offset va incrementato di 2 anzichè 1 - lo pre-incremento per usare lo slot aggiuntivo necessario
+			if(par.getType() instanceof ArrowTypeNode) //MOD (HO): l'offset va incrementato di 2 anzichï¿½ 1 - lo pre-incremento per usare lo slot successivo e riservare quello attuale (i parametri sono positivi su AR)
 				parOffset++;
 			
 			if (hmn.put(par.id, new STentry(nestingLevel,par.getType(),parOffset++)) != null) {
@@ -102,10 +102,10 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		visit(n.exp);
 		Map<String, STentry> hm = symTable.get(nestingLevel);
 		
-		visit(n.getType()); 						//MOD: verifico se è coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
+		visit(n.getType()); 						//MOD: verifico se ï¿½ coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
 		
 		STentry entry = new STentry(nestingLevel,n.getType(),decOffset--);
-		if(n.getType() instanceof ArrowTypeNode) 	//MOD: (HO) l'offset va decrementato di 2
+		if(n.getType() instanceof ArrowTypeNode) 	//MOD: (HO) l'offset va decrementato di 2, viene post-descrementato per riservare uno spazio aggiuntivo (le dichiarazioni sono negative su AR)
 			decOffset--;
 		
 		//inserimento di ID nella symtable
@@ -261,10 +261,10 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	@Override
 	public Void visitNode(ClassNode n) {
 		if (print) printNode(n, n.id);
-		Map<String, STentry> hm = symTable.get(nestingLevel);	// nestingLevel è sempre 0 per le dichiarazioni delle classi
+		Map<String, STentry> hm = symTable.get(nestingLevel);	// nestingLevel ï¿½ sempre 0 per le dichiarazioni delle classi
 
 		ClassTypeNode type = null;
-		if (n.superID != null) { 								// se la classe eredita, devo partire dalla STentry della super-classe
+		if (n.superID != null) { 								// se la classe eredita, devo partire dalla STentry della super-classe ricopiando tutti i fielsd/methods
 			if (hm.containsKey(n.superID)) {
 				n.superEntry = hm.get(n.superID);									// collego la super-entry
 				
@@ -279,13 +279,13 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		if (type==null)
 			type=new ClassTypeNode(new ArrayList<>(), new ArrayList<>());
 		
-		n.setType(type);												// instanto setto il type, verrà aggiornato qui sotto con campi e metodi
+		n.setType(type);												// instanto setto il type, verrï¿½ aggiornato qui sotto con campi e metodi
 		
 		STentry entry = new STentry(nestingLevel,type , decOffset--);	// la dichiarazione della classe sfrutta 1 elemento dello stack
-																		// infatti l'AR dove è dichiarata la classe è sempre nel nesting-level 0 (ProgLetIn) 
+																		// infatti l'AR dove ï¿½ dichiarata la classe ï¿½ sempre nel nesting-level 0 (ProgLetIn) 
 																		// quindi quando si fa ClassCall si usa l'AR globale per settare l'access-link.
 		
-		Map<String, STentry> vt = null; 					 		 	// virtual-table - elemento da inserire in class-table (serve per permettere l'ereditarietà)
+		Map<String, STentry> vt = null; 					 		 	// virtual-table - elemento da inserire in class-table (serve per permettere l'ereditarietï¿½)
 		if (n.superID != null && classTable.containsKey(n.superID))   
 			vt = new HashMap<>(classTable.get(n.superID)); 			 	// se la classe eredita, allora copio il suo vt dalla class-table
 		else
@@ -313,7 +313,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			fieldOffset -= type.allFields.size();
 		}
 		
-		HashSet<String> locals = new HashSet<>();		// OTTIMIZZAZIONE: mi serve a verificare se localmente è già definito un campo/metodo 
+		HashSet<String> locals = new HashSet<>();		// OTTIMIZZAZIONE: mi serve a verificare se localmente ï¿½ giï¿½ definito un campo/metodo 
 														// non posso infatti verificare la hmn dato che questa contiene la vt che potrebbe contenere la Dec della super-classe
 		
 		// i fields vengono gestiti similmente ai parametri di una funzione - non viene eseguita la visita (non ci sono espressioni da valutare)
@@ -325,13 +325,13 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 				continue;
 			} 
 			
-			visit(f.getType()); 						//MOD: verifico se è coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
+			visit(f.getType()); 						//MOD: verifico se ï¿½ coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
 			
 			locals.add(f.id);
 		
 			STentry fieldEntry = null;
 			
-			if(vt.containsKey(f.id)) {		// se il campo è già in vt allora faccio override
+			if(vt.containsKey(f.id)) {		// se il campo ï¿½ giï¿½ in vt allora faccio override
 				
 				STentry superFieldEntry = vt.get(f.id);
 				
@@ -339,7 +339,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 				{
 					System.out.println("Overriding with field " + f.id + " at line "+ f.getLine() +" not allowed");
 					stErrors++;
-					locals.remove(f.id);	// lo tolgo per permettere la successiva ri-definizione corretta dato che al momento è stato skippato
+					locals.remove(f.id);	// lo tolgo per permettere la successiva ri-definizione corretta dato che al momento ï¿½ stato skippato
 					continue;
 				}
 				
@@ -371,10 +371,10 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 				continue;
 			} 
 			
-			// check overriding: se è un overriding di un NON MethodTypeNode skippo il metodo direttamente
+			// check overriding: se ï¿½ un overriding di un NON MethodTypeNode skippo il metodo direttamente
 			boolean overriding=false;
 			STentry superMethodEntry = null;
-			if(vt.containsKey(m.id)) {		// se il metodo è già in vt allora verifico se è possibile fare override
+			if(vt.containsKey(m.id)) {		// se il metodo ï¿½ giï¿½ in vt allora verifico se ï¿½ possibile fare override
 				
 				superMethodEntry = vt.get(m.id);
 				
@@ -413,17 +413,17 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		
 		for (ParNode par : n.parlist) 
 		{
-			//TODO: check reftype exists
+			//TODO: check reftype exists <---
 			parTypes.add(par.getType());
 		}
 		
 		n.setType(new MethodTypeNode(new ArrowTypeNode(parTypes, n.retType)));
 		
-		visit(n.getType()); 										//MOD: verifico se è coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
+		visit(n.getType()); 										//MOD: verifico se ï¿½ coinvolto un tipo RefType e in tal caso verifico la dichiarazione della classe a cui si riferisce
 		
 		STentry entry = null;
 		
-		if(hm.containsKey(n.id)) {									// overriding - il controllo circa la possibilità è già fatto da ClassNode
+		if(hm.containsKey(n.id)) {									// overriding - il controllo circa la possibilitï¿½ ï¿½ giï¿½ fatto da ClassNode
 			STentry superMethodEntry = hm.get(n.id);
 			n.offset=superMethodEntry.offset;						// uso l'offset precedente	
 		} else {
@@ -494,7 +494,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	public Void visitNode(NewNode n) {				// simile a CallNode
 		if (print) printNode(n);
 		
-		if( !classTable.containsKey(n.id) )			// n.id è sempre l'ID di una classe - quindi verifico direttamente in classTable
+		if( !classTable.containsKey(n.id) )			// n.id ï¿½ sempre l'ID di una classe - quindi verifico direttamente in classTable
 		{
 			System.out.println("Class " + n.id + " at line "+ n.getLine() + " not declared");
 			stErrors++;

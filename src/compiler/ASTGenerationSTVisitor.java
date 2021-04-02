@@ -249,11 +249,12 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitArrow(ArrowContext c) { // hotype di tipo arrow esempio: (hotype,hotype)=>type 
 		if (print) printVarAndProdName(c);
 		
+		// non sono parNode come su funzione ma semplici typeNode perchÃ¨ la sintassi Ã¨ x:(int,int)->int e non x(a:int,b:int)->int 
 		List<TypeNode> parList = new ArrayList<>();	 // carico i parametri che sono hotype (quindi ricorsivamente potrebbero anche essere di tipo arrow)
 		for (int i = 0; i < c.hotype().size(); i++)
 			parList.add((TypeNode) visit(c.hotype(i)));
 		
-		Node n = new ArrowTypeNode(parList, (TypeNode)visit(c.type()));  // il ritorno è sempre type
+		Node n = new ArrowTypeNode(parList, (TypeNode)visit(c.type()));  // il ritorno Ã¨ sempre type
 		n.setLine(c.ARROW().getSymbol().getLine());
 		return n;
 	}
@@ -269,7 +270,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		
 		if(c.EXTENDS() != null) {
 			superID = c.ID(1).getSymbol().getText();
-			startIndex = 2;		// se la classe estende, gli ID dei fields partono dall'indice 2 anzichè dall'indice 1
+			startIndex = 2;		// se la classe estende, gli ID dei fields partono dall'indice 2 anzichï¿½ dall'indice 1
 		}
 
 		List<FieldNode> fields = new ArrayList<>();
@@ -319,13 +320,13 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 		List<Node> arglist = new ArrayList<>(); // lista argomenti da passare alla chiamata del metodo
 		for (ExpContext arg : c.exp()) arglist.add(visit(arg));
 		
-		Node n = new ClassCallNode(c.ID(0).getText(), c.ID(1).getText(), arglist); // il primo ID è un refTypeNode (che all'interno contiene l'ID della classe a cui si riferisce)
+		Node n = new ClassCallNode(c.ID(0).getText(), c.ID(1).getText(), arglist); // il primo ID ï¿½ un refTypeNode (che all'interno contiene l'ID della classe a cui si riferisce)
 		n.setLine(c.ID(0).getSymbol().getLine());
 		return n;
 	}
 	
 	@Override
-	public Node visitNew(NewContext c) {	// simile a call (le classi di Fool non hanno costruttori, ogni field è passato come argomento con il new)
+	public Node visitNew(NewContext c) {	// simile a call (le classi di Fool non hanno costruttori, ogni field ï¿½ passato come argomento con il new)
 		if (print) printVarAndProdName(c);
 		
 		List<Node> arglist = new ArrayList<>();

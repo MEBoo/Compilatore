@@ -289,5 +289,3 @@ Layout AR:
 - Oltre alla symbol table mi serve anche classTable per mappare ogni classe che trovo nella propria virtualTable... altrimenti dopo aver visitato la classe A verrebbe buttata via e se eredito non la trovo più. Serve anche per l'uso pippo.m()
 
 ...
-
-\

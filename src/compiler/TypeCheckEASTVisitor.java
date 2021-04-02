@@ -56,7 +56,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 			}
 		
 		//if (n.retType==null)
-		//	throw new TypeException("Undeclared type for ret type for function " + n.id,n.getLine()); //MOD: se il type è un ID che non esiste blocco tutto
+		//	throw new TypeException("Undeclared type for ret type for function " + n.id,n.getLine()); //MOD: se il type ï¿½ un ID che non esiste blocco tutto
 		//else 
 		if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) ) 
 			throw new TypeException("Wrong return type for function " + n.id,n.getLine());
@@ -68,7 +68,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		if (print) printNode(n,n.id);
 		
 		//if (n.getType()==null)
-		//	throw new TypeException("Undeclared type for variable " + n.id,n.getLine()); //MOD: se il type è un ID che non esiste blocco tutto
+		//	throw new TypeException("Undeclared type for variable " + n.id,n.getLine()); //MOD: se il type ï¿½ un ID che non esiste blocco tutto
 		//else 
 		if ( !isSubtype(visit(n.exp),ckvisit(n.getType())) )
 			throw new TypeException("Incompatible value for variable " + n.id,n.getLine());
@@ -153,7 +153,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		if (print) printNode(n,n.id);
 		TypeNode t = visit(n.entry); 
 		
-		//if (t instanceof ArrowTypeNode)														//MOD (HO)
+		//if (t instanceof ArrowTypeNode)														//MOD (HO) ora Ã¨ possibile che un id sia una fun
 		//	throw new TypeException("Wrong usage of function identifier " + n.id,n.getLine());
 
 		if (t instanceof ClassTypeNode)															//MOD (OO)
@@ -300,7 +300,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(ClassNode n) throws TypeException {
 		if (print) printNode(n);
 		
-		if(n.superEntry!=null)									// la classe estende un'altra classe che è già dichiarata (check fatto da symbol table visitor)
+		if(n.superEntry!=null)									// la classe estende un'altra classe che ï¿½ giï¿½ dichiarata (check fatto da symbol table visitor)
 			TypeRels.superType.put(n.id, n.superID);			// memorizzo la relazione tra le classi per permettere type-check dei RefType
 		
 		for (Node met : n.methods)
@@ -310,7 +310,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 			
 			ClassTypeNode parentCT = (ClassTypeNode)n.superEntry.type;
 			
-			for(FieldNode f : n.fields) {						// OTTIMIZZAZIONE: ciclo i campi e verifico sulla super-classe se c'è stato override corretto
+			for(FieldNode f : n.fields) {						// OTTIMIZZAZIONE: ciclo i campi e verifico sulla super-classe se c'ï¿½ stato override corretto
 				int superPos = -f.offset-1;
 				if (superPos >= 0 && superPos < parentCT.allFields.size()) {
 					if ( !(isSubtype(f.getType(), parentCT.allFields.get(superPos))) ) 
@@ -318,7 +318,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 				}
 			}
 			
-			for(MethodNode m : n.methods) {						// OTTIMIZZAZIONE: ciclo i metodi e verifico sulla super-classe se c'è stato override corretto
+			for(MethodNode m : n.methods) {						// OTTIMIZZAZIONE: ciclo i metodi e verifico sulla super-classe se c'ï¿½ stato override corretto
 				int superPos = m.offset;						
 				if (superPos >= 0 && superPos < parentCT.allMethods.size()) {
 					if ( !(isSubtype(((MethodTypeNode)m.getType()).fun, parentCT.allMethods.get(superPos))) )

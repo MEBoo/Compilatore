@@ -238,7 +238,7 @@ public class AST {
 	
 	public static class ClassNode extends DecNode {
 		final String id;
-		final List<FieldNode> fields; 	// fields privati e non modificabili (come le var)
+		final List<FieldNode> fields; 	// fields protected e non modificabili (come le var)
 		final List<MethodNode> methods; // metodi sempre pubblici 
 		final String superID; 			// ID della classe da cui eredita (null se non eredita)
 		STentry superEntry;				// entry super-classe
@@ -326,7 +326,7 @@ public class AST {
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
 	
-	public static class ClassTypeNode extends TypeNode {	// type per la classe costituito da campi + metodi in ordine di apparizione
+	public static class ClassTypeNode extends TypeNode {	// type per la classe costituito da campi + metodi in ordine di apparizione (usato nella symbol table)
 		final List<TypeNode> allFields;
 		final List<ArrowTypeNode> allMethods;
 		ClassTypeNode(final List<TypeNode> fieldsTypes, final List<ArrowTypeNode> methodsTypes) {
@@ -338,7 +338,7 @@ public class AST {
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
 	
-	public static class MethodTypeNode extends TypeNode {	// Wrapper di un ArrowTypeNode : ci serve per distinguere un metodo da una funzione
+	public static class MethodTypeNode extends TypeNode {	// Wrapper di un ArrowTypeNode : ha un campo fun che contiene la ArrowTypeNode per sapere che devo andare nella dispatch table
 		ArrowTypeNode fun;
 		MethodTypeNode(ArrowTypeNode f) {
 			fun = f;

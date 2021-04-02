@@ -44,7 +44,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		if (print) printNode(n,n.id);
 		String declCode = null, popDecl = null, popParl = null;
 		
-		for (DecNode dec : n.declist) {						//MOD (HO): nel ripulire lo stack ogni dec / par di tipo Arrow occupa 2 posizioni
+		for (DecNode dec : n.declist) {						//MOD (HO): nel ripulire lo stack ogni dec/par di tipo Arrow occupa 2 posizioni
 			declCode = nlJoin(declCode,visit(dec));
 			
 			if (dec.getType() instanceof ArrowTypeNode)
@@ -80,9 +80,9 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				"js"  // jump to to popped address
 			)
 		);
-		return nlJoin(			//MOD (HO)
+		return nlJoin(			//MOD (HO) - ora le funzioni occupano 2 spazi (closur con 2 info)
 				"lfp",			//carico sullo stack il puntatore all'AR della dichiarazione della funzione - che corrisponde all'attuale Frame Pointer (registro FP)
-				"push "+funl
+				"push "+funl	//indirizzo funzione per invocere il suo codice
 				);		
 	}
 	
@@ -93,17 +93,17 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		for (int i=n.arglist.size()-1;i>=0;i--) argCode=nlJoin(argCode,visit(n.arglist.get(i)));
 		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
 		
-		if(n.entry.type instanceof MethodTypeNode) {	// MOD (OO): chiamata di un metodo locale cioè dall'interno di un altro metodo di un oggetto
+		if(n.entry.type instanceof MethodTypeNode) {	// MOD (OO): chiamata di un metodo locale cioï¿½ dall'interno di un altro metodo di un oggetto
 			return nlJoin(
 				"lfp", 			// carico Control Link (puntatore al frame del chiamante)
 				argCode, 		// generate code for argument expressions in reversed order
 				"lfp", getAR,   // raggiungo l'address del frame contente la dichiarazione di ID, in pratica arrivo all'oggetto sull'heap
 	                            // seguendo sempre la catena statica di Access Links (come la normale chiamata di una funzione)
 	            "stm", 			// pop dell'Access Link in $tm per duplicarlo
-	            "ltm", 			// carico sullo stack l'Access Link (che è l'object pointer)
-	            "ltm",        	// duplico il valore precedente, cioè AL / obj pointer
-	            "lw",		  	// carica sullo stack l'indirizzo della dispatch table dell'oggetto (perchè l'obj pointer punta direttamente alla cella dove è memorizzato il dispatch pointer)
-	            "push "+n.entry.offset, "add", // calcolo indirizzo della cella in dispatch table dove è memorizzato l'indirizzo del metodo
+	            "ltm", 			// carico sullo stack l'Access Link (che ï¿½ l'object pointer)
+	            "ltm",        	// duplico il valore precedente, cioï¿½ AL / obj pointer
+	            "lw",		  	// carica sullo stack l'indirizzo della dispatch table dell'oggetto (perchï¿½ l'obj pointer punta direttamente alla cella dove ï¿½ memorizzato il dispatch pointer)
+	            "push "+n.entry.offset, "add", // calcolo indirizzo della cella in dispatch table dove ï¿½ memorizzato l'indirizzo del metodo
 	            "lw", 			// carico sullo stack l'indirizzo del metodo
 	            "js" 			// salto
 			);
@@ -127,13 +127,13 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		String getAR = null;
 		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
 		
-		if(n.entry.type instanceof ArrowTypeNode) { 			//MOD (HO) - preparo la closure 
+		if(n.entry.type instanceof ArrowTypeNode) { 			//MOD (HO) - carico la closure 
 			return nlJoin( 
 				"lfp", getAR, // retrieve address of frame containing "id" declaration
 				"stm", 		  // set $tm to popped value (salvo l'indirizzo della AR - devo usarlo 2 volte)
-		        "ltm", 		  // ricarico sullo stack l'indirizzo dell' AR dove è dichiarato ID
-				"push "+n.entry.offset, "add", "lw", //carico l'AR dove è effettivamente dichiarata la funzione (mi servirà come Access Link nella chiamata)
-				"ltm", 		  // ricarico sullo stack l'indirizzo dell' AR dove è dichiarato ID
+		        "ltm", 		  // ricarico sullo stack l'indirizzo dell' AR dove ï¿½ dichiarato ID
+				"push "+n.entry.offset, "add", "lw", //carico l'AR dove ï¿½ effettivamente dichiarata la funzione (mi servirï¿½ come Access Link nella chiamata)
+				"ltm", 		  // ricarico sullo stack l'indirizzo dell' AR dove ï¿½ dichiarato ID
 				"push "+(n.entry.offset-1), "add", "lw" // carica l'indirizzo della funzione (la label)
 				);
 		} else {
@@ -261,7 +261,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		return nlJoin(
 			visit(n.right),  // inverto gli argomenti rispetto a equal/less equal
 			visit(n.left),
-			"bleq "+l1,		// uso bleq invece di beq
+			"bleq "+l1,		
 			"push 0",
 			"b "+l2,
 			l1+":",
@@ -278,7 +278,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		return nlJoin(
 			visit(n.left), 
 			visit(n.right),
-			"bleq "+l1,		// uso bleq invece di beq
+			"bleq "+l1,		
 			"push 0",
 			"b "+l2,
 			l1+":",
@@ -293,7 +293,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		return nlJoin(
 			"push 1",		// eseguo l'operazione 1 - n.exp
 			visit(n.exp),	// assumo che n.exp sia sicuramente un bool quindi: 0 oppure 1. 
-			"sub"			// la soluzione alternativa è usare beq ma richiede più istruzioni	
+			"sub"			// la soluzione alternativa ï¿½ usare beq ma richiede piï¿½ istruzioni	
 		);
 	}
 	
@@ -303,7 +303,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	 	String l1 = freshLabel();
 	 	String l2 = freshLabel();
 		return nlJoin(
-			"push 1",		// check primo argomento - se questo è true non valuto il secondo argomento 
+			"push 1",		// check primo argomento - se questo ï¿½ true non valuto il secondo argomento 
 			visit(n.left),
 			"beq "+l2,		
 			"push 1",		// check secondo argomento
@@ -323,7 +323,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	 	String l1 = freshLabel();
 	 	String l2 = freshLabel();
 		return nlJoin(
-			"push 0",		// check primo argomento - se questo è false non valuto il secondo argomento
+			"push 0",		// check primo argomento - se questo ï¿½ false non valuto il secondo argomento
 			visit(n.left),
 			"beq "+l2,		
 			"push 0",		// check secondo argomento
@@ -337,8 +337,8 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		);
 	}
 
-	// NOTA su AND & OR : entrambe le procedure si potrebbero implementare più brevi seguendo il metodo usato per NOT (con sub / add)
-	// Tuttavia così facendo si valuterebbero sempre entrambi gli argomenti, cosa che gli altri linguaggi in genere non fanno.
+	// NOTA su AND & OR : entrambe le procedure si potrebbero implementare piï¿½ brevi seguendo il metodo usato per NOT (con sub / add)
+	// Tuttavia cosï¿½ facendo si valuterebbero sempre entrambi gli argomenti, cosa che gli altri linguaggi in genere non fanno.
 
 	// OBJECT ORIENTED
 	
@@ -380,7 +380,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	}
 	
 	@Override
-	public String visitNode(MethodNode n) {		// come FunNode - però non ritorna l'etichetta
+	public String visitNode(MethodNode n) {		// come FunNode - perï¿½ non ritorna l'etichetta
 		if (print) printNode(n,n.id);
 		String declCode = null, popDecl = null, popParl = null;
 		
@@ -427,7 +427,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 	
 	@Override
 	public String visitNode(EmptyNode n) {
-		return nlJoin("push -1"); 	//-1 è un valore diverso da qualsiasi object pointer di qualsiasi oggetto creato
+		return nlJoin("push -1"); 	//-1 ï¿½ un valore diverso da qualsiasi object pointer di qualsiasi oggetto creato
 	}
 	
 	@Override
@@ -441,13 +441,13 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		return nlJoin(
 			"lfp", 		  // carica control link
 			argCode, 	  // genera il codice per gli argomenti
-			"lfp", getAR, // risalita catena statica per trovare refID cioè l'object pointer ( refID può essere dichiarato sullo stack o essere un campo sull'heap )
+			"lfp", getAR, // risalita catena statica per trovare refID cioï¿½ l'object pointer ( refID puï¿½ essere dichiarato sullo stack o essere un campo sull'heap )
 			"push " + n.entry.offset, "add", // calcolo la posizione dell'indirizzo di refID 
 			"lw", 		  // carica sullo stack l'indirizzo dell'oggetto che sta sull'heap ( quindi sullo stack ho messo l'Access Link )
 			"stm", 		  // pop contenuto stack in tm per duplicare
             "ltm",        // carica Access Link 
-            "ltm",        // duplico il valore precedente cioè AL / obj pointer
-            "lw",		  // carica sullo stack l'indirizzo della dispatch table dell'oggetto (perchè l'obj pointer punta alla cella dove è memorizzato il dispatch pointer)
+            "ltm",        // duplico il valore precedente cioï¿½ AL / obj pointer
+            "lw",		  // carica sullo stack l'indirizzo della dispatch table dell'oggetto (perchï¿½ l'obj pointer punta alla cella dove ï¿½ memorizzato il dispatch pointer)
             "push "+ n.methodEntry.offset , "add", // calcolo la posizione dell'indirizzo del metodo a cui saltare
 			"lw", 		  // carica sullo stack l'indirizzo del metodo
 			"js" 		  // e poi salto a quell'indirizzo
@@ -474,7 +474,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				argCode,		// carico gli argomenti tutti sullo stack
 				heapCopy,		// sposto gli argomenti nell'heap, sono i campi dell'oggetto 
 				"push " + (ExecuteVM.MEMSIZE + n.entry.offset), "lw", // carico sullo stack l'indirizzo della dispatch table (prendendolo dalla dichiarazione della classe sull'AR base nello stack)
-				"lhp", "sw",  	// scrivo l'indirizzo della dispatch table all'indirizzo di hp (cioè lo scrivo sull'heap subito dopo/prima dei campi)
+				"lhp", "sw",  	// scrivo l'indirizzo della dispatch table all'indirizzo di hp (cioï¿½ lo scrivo sull'heap subito dopo/prima dei campi)
 				"lhp", 	  	  	// valore lasciato sullo stack al termine di tutto il new(): carico sullo stack il valore di HP che contiene l'object pointer
 				"lhp", "push 1", "add", "shp" // incrementa HP di 1
 			);

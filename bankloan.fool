@@ -4,6 +4,18 @@ let
     fun getMon:int () money;
   }
   
+  var a:Account = new Account(100);
+      
+in print(a.getMon());  
+
+
+/*
+let
+
+  class Account (money:int) {
+    fun getMon:int () money;
+  }
+  
   class TradingAcc extends Account (invested:int) {
     fun getInv:int () invested;
   }
@@ -26,3 +38,4 @@ let
   var myLoan:Account = bl.openLoan(myTradingAcc);
       
 in print(if (myLoan==null) then {0} else {myLoan.getMon()});  
+*/

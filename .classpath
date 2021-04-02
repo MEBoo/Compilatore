@@ -6,6 +6,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.USER_LIBRARY/ANTRL runtime"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/ANTLR runtime"/>
 	<classpathentry excluding="compiler/SymbolTableASTVisitorBetter.java" kind="src" path="src"/>
 	<classpathentry kind="src" path="antlr4-generated-sources"/>
 	<classpathentry kind="output" path="bin"/>
