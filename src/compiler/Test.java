@@ -46,8 +46,8 @@ public class Test {
     		System.out.print("Type of main program expression is: ");
     		new PrintEASTVisitor().visit(mainType);
     
-    	//} catch (IncomplException e) {    		
-    	//	System.out.println("Could not determine main program expression type due to errors detected before type checking.");
+    	} catch (IncomplException e) {    		
+    		System.out.println("Could not determine main program expression type due to errors detected before type checking.");
     	
     	} catch (TypeException e) {
     		System.out.println("Type checking error in main program expression: "+e.text); 

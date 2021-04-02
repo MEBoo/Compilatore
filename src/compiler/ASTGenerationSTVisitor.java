@@ -246,14 +246,15 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	// HIGHER ORDER
 	
 	@Override
-	public Node visitArrow(ArrowContext c) { // hotype di tipo arrow esempio: (hotype,hotype)=>type 
+	
+	public Node visitArrow(ArrowContext c) { // hotype di tipo arrow esempio: (hotype,hotype)->type 
 		if (print) printVarAndProdName(c);
 		
-		List<TypeNode> parList = new ArrayList<>();	 // carico i parametri che sono hotype (quindi ricorsivamente potrebbero anche essere di tipo arrow)
-		for (int i = 0; i < c.hotype().size(); i++)
-			parList.add((TypeNode) visit(c.hotype(i)));
+		List<TypeNode> parTypeList = new ArrayList<>();	 // carico i parametri che sono hotype (quindi ricorsivamente potrebbero anche essere di tipo arrow)
+		for (int i = 0; i < c.hotype().size(); i++)  	 // attenzione: non sono parNode come su funzione ma typeNode perchè è un TIPO: la sintassi è x:(int,int)->int
+			parTypeList.add((TypeNode) visit(c.hotype(i)));
 		
-		Node n = new ArrowTypeNode(parList, (TypeNode)visit(c.type()));  // il ritorno è sempre type
+		Node n = new ArrowTypeNode(parTypeList, (TypeNode)visit(c.type()));  // il ritorno è sempre type
 		n.setLine(c.ARROW().getSymbol().getLine());
 		return n;
 	}

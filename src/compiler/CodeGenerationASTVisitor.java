@@ -80,7 +80,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 				"js"  // jump to to popped address
 			)
 		);
-		return nlJoin(			//MOD (HO)
+		return nlJoin(			//MOD (HO): ora le funzioni occupano 2 spazi (closure)
 				"lfp",			//carico sullo stack il puntatore all'AR della dichiarazione della funzione - che corrisponde all'attuale Frame Pointer (registro FP)
 				"push "+funl
 				);		
@@ -127,7 +127,7 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
 		String getAR = null;
 		for (int i = 0;i<n.nl-n.entry.nl;i++) getAR=nlJoin(getAR,"lw");
 		
-		if(n.entry.type instanceof ArrowTypeNode) { 			//MOD (HO) - preparo la closure 
+		if(n.entry.type instanceof ArrowTypeNode) { 			//MOD (HO) - carico la closure 
 			return nlJoin( 
 				"lfp", getAR, // retrieve address of frame containing "id" declaration
 				"stm", 		  // set $tm to popped value (salvo l'indirizzo della AR - devo usarlo 2 volte)

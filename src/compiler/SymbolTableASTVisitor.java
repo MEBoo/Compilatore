@@ -261,7 +261,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 	@Override
 	public Void visitNode(ClassNode n) {
 		if (print) printNode(n, n.id);
-		Map<String, STentry> hm = symTable.get(nestingLevel);	// nestingLevel è sempre 0 per le dichiarazioni delle classi
+		Map<String, STentry> hm = symTable.get(0);				// nestingLevel è sempre 0 per le dichiarazioni delle classi
 
 		ClassTypeNode type = null;
 		if (n.superID != null) { 								// se la classe eredita, devo partire dalla STentry della super-classe
@@ -413,7 +413,6 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		
 		for (ParNode par : n.parlist) 
 		{
-			//TODO: check reftype exists
 			parTypes.add(par.getType());
 		}
 		
@@ -423,7 +422,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		
 		STentry entry = null;
 		
-		if(hm.containsKey(n.id)) {									// overriding - il controllo circa la possibilità è già fatto da ClassNode
+		if(hm.containsKey(n.id)) {									// overriding - il controllo circa la sua possibilità è già fatto da ClassNode
 			STentry superMethodEntry = hm.get(n.id);
 			n.offset=superMethodEntry.offset;						// uso l'offset precedente	
 		} else {
@@ -470,7 +469,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 			n.entry = entry;
 			n.nl = nestingLevel;
 			
-			if(!(n.entry.type instanceof RefTypeNode)) {								//check se type presente (classe declared)
+			if(!(n.entry.type instanceof RefTypeNode)) {								//check se il type presente (classe declared)
 				System.out.println("Cannot call " + n.refID + "." + n.methodID + "() at line " + n.getLine() + ": class undefined");
 				stErrors++;
 			} else if (!classTable.containsKey(((RefTypeNode)n.entry.type).id)) { 		//check esistenza classe RefTypeNode.id

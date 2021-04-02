@@ -238,7 +238,7 @@ public class AST {
 	
 	public static class ClassNode extends DecNode {
 		final String id;
-		final List<FieldNode> fields; 	// fields privati e non modificabili (come le var)
+		final List<FieldNode> fields; 	// fields protected e non modificabili (come le var)
 		final List<MethodNode> methods; // metodi sempre pubblici 
 		final String superID; 			// ID della classe da cui eredita (null se non eredita)
 		STentry superEntry;				// entry super-classe
@@ -272,8 +272,8 @@ public class AST {
 		final List<ParNode> parlist;
 		final List<DecNode> declist; 
 		final Node exp;
-		int offset;
-		String label; 
+		int offset;		// serve per type-checking e code-generation
+		String label; 	// serve per la code-generation
 		
 		MethodNode(String i, TypeNode rt, List<ParNode> pl, List<DecNode> dl, Node e) {
 	    	id=i; 
@@ -283,7 +283,7 @@ public class AST {
 	    	exp=e;
 	    }
 		
-		public void setType(TypeNode t) {type = t;}  // usato da SymbolTable durante la visita per settare il tipo "ArrowTypeNode".
+		public void setType(TypeNode t) {type = t;}  // usato da SymbolTable durante la visita per settare il tipo "MethodTypeNode".
 		
 		@Override
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
@@ -326,7 +326,7 @@ public class AST {
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
 	
-	public static class ClassTypeNode extends TypeNode {	// type per la classe costituito da campi + metodi in ordine di apparizione
+	public static class ClassTypeNode extends TypeNode {	// type per la classe costituito da campi + metodi in ordine di apparizione - usato nel SymbolTableAST..
 		final List<TypeNode> allFields;
 		final List<ArrowTypeNode> allMethods;
 		ClassTypeNode(final List<TypeNode> fieldsTypes, final List<ArrowTypeNode> methodsTypes) {
@@ -338,9 +338,9 @@ public class AST {
 		public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
 	}
 	
-	public static class MethodTypeNode extends TypeNode {	// Wrapper di un ArrowTypeNode : ci serve per distinguere un metodo da una funzione
-		ArrowTypeNode fun;
-		MethodTypeNode(ArrowTypeNode f) {
+	public static class MethodTypeNode extends TypeNode {	// Wrapper di un ArrowTypeNode : MethodTypeNode ci serve per distinguere un metodo da una normale funzione 
+		ArrowTypeNode fun;								 	// I metodi infatti usano la dispatch table diversamente dalle funzioni. 
+		MethodTypeNode(ArrowTypeNode f) {					// Usato nella code-gen durante la chiamata del metodo all'interno di un altro metodo
 			fun = f;
 		}
 		

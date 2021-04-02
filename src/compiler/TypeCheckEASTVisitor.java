@@ -55,9 +55,6 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 				System.out.println("Type checking error in a declaration: " + e.text);
 			}
 		
-		//if (n.retType==null)
-		//	throw new TypeException("Undeclared type for ret type for function " + n.id,n.getLine()); //MOD: se il type è un ID che non esiste blocco tutto
-		//else 
 		if ( !isSubtype(visit(n.exp),ckvisit(n.retType)) ) 
 			throw new TypeException("Wrong return type for function " + n.id,n.getLine());
 		return null;
@@ -67,9 +64,6 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 	public TypeNode visitNode(VarNode n) throws TypeException {
 		if (print) printNode(n,n.id);
 		
-		//if (n.getType()==null)
-		//	throw new TypeException("Undeclared type for variable " + n.id,n.getLine()); //MOD: se il type è un ID che non esiste blocco tutto
-		//else 
 		if ( !isSubtype(visit(n.exp),ckvisit(n.getType())) )
 			throw new TypeException("Incompatible value for variable " + n.id,n.getLine());
 		return null;

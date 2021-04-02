@@ -4,8 +4,6 @@ push function0
 lfp
 push function3
 lfp
-push function4
-lfp
 push 2
 lfp
 stm
@@ -51,19 +49,7 @@ lw
 js
 push 1
 beq label0
-lfp
-lfp
-lw
-stm
-ltm
-push -6
-add
-lw
-ltm
-push -7
-add
-lw
-js
+push 2
 b label1
 label0:
 lfp
@@ -192,18 +178,6 @@ pop
 pop
 sra
 pop
-pop
-sfp
-ltm
-lra
-js
-
-function4:
-cfp
-lra
-push 1
-stm
-sra
 pop
 sfp
 ltm
